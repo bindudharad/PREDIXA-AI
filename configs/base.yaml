@@ -1,0 +1,95 @@
+app:
+  name: predixa-ai
+  version: 0.1.0
+  environment: development
+
+database:
+  host: localhost
+  port: 5432
+  name: predixa
+  user: postgres
+  password:   pool_size: 10
+  max_overflow: 20
+
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  password: 
+mlflow:
+  tracking_uri: http://localhost:5000
+  artifact_uri: s3://predixa-mlflow/artifacts
+
+s3:
+  endpoint: http://localhost:9000
+  access_key:   secret_key:   bucket: predixa-data
+
+data_providers:
+  primary: polygon
+  fallback: [yahoo, alphavantage]
+  polygon:
+    api_key:     base_url: https://api.polygon.io
+  yahoo:
+    base_url: https://query1.finance.yahoo.com
+  alphavantage:
+    api_key:     base_url: https://www.alphavantage.co
+
+universe:
+  name: sp500_liquid
+  min_market_cap: 2000000000
+  min_avg_volume: 500000
+  min_price: 5.0
+
+features:
+  version: feat_v1.0
+  lag_config:
+    fundamentals_days: 60
+    news_days: 1
+    macro_days: 1
+    market_relative_days: 1
+
+labels:
+  version: label_v1.0
+  horizons: [1, 5, 10, 20, 60]
+  thresholds:
+    up: 0.02
+    down: 0.02
+    sideways: 0.01
+
+training:
+  walkforward:
+    method: expanding
+    n_folds: 5
+    embargo_days: 30
+    val_months: 3
+    test_months: 3
+  hpo:
+    n_trials: 100
+    timeout: 3600
+
+backtest:
+  entry_rule: next_open
+  exit_rule: fixed_horizon
+  costs:
+    commission_per_share: 0.005
+    commission_min: 1.0
+    spread_bps: 10
+    slippage_bps: 5
+    slippage_model: square_root
+  sizing:
+    method: fixed_fractional
+    max_position_pct: 0.05
+  constraints:
+    max_position_pct: 0.10
+    max_sector_pct: 0.30
+    max_gross_exposure: 1.0
+    max_turnover_monthly: 2.0
+
+monitoring:
+  drift:
+    prediction_psi_threshold: 0.25
+    feature_psi_threshold: 0.20
+    ece_threshold: 0.05
+    logloss_increase_threshold: 0.10
+  performance_window_days: 30
+  alert_channels: [slack, email]
